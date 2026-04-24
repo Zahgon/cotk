@@ -233,10 +233,7 @@ class SSTResourceProcessor(BaseResourceProcessor):
 		return self.basepreprocess(local_path, 'trees')
 
 	def _parseline(self, line):
-		label = int(line[1])
-		line = line.split(')')
-		sent = [x.split(' ')[-1] for x in line if x != '']
-		return label, ' '.join(sent)
+		pass
 
 	def _postprocess(self, src, dest, key):
 		with open(os.path.join(src, key + '.txt'), 'r', encoding='utf-8') as fin, \

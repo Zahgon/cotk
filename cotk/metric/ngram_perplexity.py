@@ -62,8 +62,7 @@ class NgramFwBwPerplexityMetric(MetricBase):
 
 				{MetricBase.FORWARD_GEN_ARGUMENTS}
 		'''
-		gen = data[self.gen_key]
-		self.hyps.extend(gen)
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains:

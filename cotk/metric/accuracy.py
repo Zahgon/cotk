@@ -61,13 +61,7 @@ class AccuracyMetric(MetricBase):
 					...		prediction_key: [1,2,1,2]
 					... }
 		'''
-		super().forward(data)
-		self.hyps.extend(data[self.prediction_key])
-		self.refs.extend(data[self.label_key])
-		if len(data[self.prediction_key]) != len(data[self.label_key]):
-			raise ValueError("Batch num is not matched.")
-
-		self._hash_unordered_list(data[self.label_key])
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''

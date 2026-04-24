@@ -123,22 +123,22 @@ class Vocab(LoadClassInterface, metaclass=DocStringInheritor):
 	def pad_id(self) -> int:
 		'''int: The id of pad token. Raise ``KeyError`` if no pad token in this instance. {_VOCAB_MORE_DOCSTRING}
 		'''
-		return self.get_special_tokens_id("pad")
+		pass
 	@property
 	def unk_id(self) -> int:
 		'''int: The id of unk token. Raise ``KeyError`` if no unk token in this instance. {_VOCAB_MORE_DOCSTRING}
 		'''
-		return self.get_special_tokens_id("unk")
+		pass
 	@property
 	def go_id(self) -> int:
 		'''int: The id of go token. Raise ``KeyError`` if no go token in this instance. {_VOCAB_MORE_DOCSTRING}
 		'''
-		return self.get_special_tokens_id("go")
+		pass
 	@property
 	def eos_id(self) -> int:
 		'''int: The id of eos token. Raise ``KeyError`` if no eos token in this instance. {_VOCAB_MORE_DOCSTRING}
 		'''
-		return self.get_special_tokens_id("eos")
+		pass
 
 	def get_setting_hash(self) -> str:
 		'''Get setting hash for the Vocabulary instance.
@@ -244,34 +244,7 @@ class GeneralVocab(Vocab):
 			{SPECIAL_TOKEN_DOCS} Special tokens MUST be in the front of the ``frequent_vocab_list`` (ordered sensitive).
 					{SPECIAL_TOKEN_DEFAULT}
 		'''
-		vocab = GeneralVocab(special_tokens_mapping=special_tokens_mapping)
-		special_values = list(vocab.get_special_tokens_mapping().values())
-		if vocab_list[:len(special_values)] != special_values:
-			raise ValueError("special tokens should be in the front of the vocab_list, where special tokens are %s, but \
-				the first tokens of vocab_list are %s." %
-				(repr(special_values), repr(vocab_list[:len(special_values)]))
-			)
-		if len(set(vocab_list)) != len(vocab_list):
-			raise ValueError("vocab_list should not contain a single token multiple times")
-
-		#pylint: disable=protected-access
-		vocab.mode = "finish"
-		vocab._all_vocab_list = vocab_list
-		vocab._frequent_vocab_size = frequent_vocab_size
-		vocab.word2id = {w: i for i, w in enumerate(vocab.all_vocab_list)}
-
-		vocab.train_tokens = None
-		vocab.test_tokens = None
-
-		vocab._setting_hash = hashlib.sha256(dumps([ \
-			"Vocab", \
-			"predefined", \
-			vocab.all_vocab_list, \
-			vocab._frequent_vocab_size, \
-			len(vocab.special_tokens_mapping) \
-		])).hexdigest()
-
-		return vocab
+		pass
 
 	@staticmethod
 	def from_predefined_vocab(vocab: "GeneralVocab") -> "GeneralVocab":
@@ -281,12 +254,7 @@ class GeneralVocab(Vocab):
 		Arguments:
 			vocab(:class:`GeneralVocab`): The old instance.
 		'''
-		if not isinstance(vocab, GeneralVocab):
-			raise TypeError("vocab must be an instance of GeneralVocab class.")
-		vocab_list = vocab.all_vocab_list
-		frequent_vocab_size = vocab._frequent_vocab_size
-		special_token_mappings = vocab.get_special_tokens_mapping()
-		return GeneralVocab.from_predefined(vocab_list, frequent_vocab_size, special_token_mappings)
+		pass
 
 
 	@staticmethod
@@ -302,26 +270,7 @@ class GeneralVocab(Vocab):
 			{SPECIAL_TOKEN_DOCS} Special tokens MUST be in the front of the ``frequent_vocab_list`` (ordered sensitive).
 					{SPECIAL_TOKEN_DEFAULT}
 		'''
-
-		vocab = GeneralVocab(special_tokens_mapping=special_tokens_mapping)
-		special_values = list(vocab.get_special_tokens_mapping().values())
-		if frequent_vocab_list[:len(special_values)] != special_values:
-			raise ValueError("special tokens should be in the front of the vocab_list, where special tokens are %s, but \
-				the first tokens of vocab_list are %s." %
-				(repr(special_values), repr(frequent_vocab_list[:len(special_values)]))
-			)
-
-		#pylint: disable=protected-access
-		vocab.mode = "frequent_specified"
-		vocab._all_vocab_list = frequent_vocab_list
-
-		vocab._setting_hash = hashlib.sha256(dumps([ \
-			"Vocab", \
-			"frequent", \
-			frequent_vocab_list, \
-			special_tokens_mapping \
-		])).hexdigest()
-		return vocab
+		pass
 
 	@staticmethod
 	def from_frequent_word_of_vocab(vocab: "GeneralVocab") -> "GeneralVocab":
@@ -332,67 +281,13 @@ class GeneralVocab(Vocab):
 			vocab(:class:`GeneralVocab`): The old instance to provide frequent words.
 
 		'''
-		if not isinstance(vocab, GeneralVocab):
-			raise TypeError("vocab must be an instance of GeneralVocab class.")
-		vocab_list = vocab.all_vocab_list
-		frequent_vocab_size = vocab.frequent_vocab_size
-		special_token_mappings = vocab.get_special_tokens_mapping()
-		return GeneralVocab.from_predefined(vocab_list[:frequent_vocab_size], special_token_mappings)
+		pass
 
 	def add_tokens(self, tokens: List[str], vocab_from: str) -> None:
-		if self.train_tokens is None or self.test_tokens is None:
-			return
-			#raise RuntimeError("Vocabulary has been built, cannot add more tokens.")
-		if vocab_from == "train":
-			self.train_tokens.extend(tokens)
-		elif vocab_from == "test":
-			self.test_tokens.extend(tokens)
-		elif vocab_from == "extra":
-			pass
-		else:
-			raise ValueError("Unknown vocab_from: %s, only supports frequent, rare, extra or default" % vocab_from)
+		pass
 
 	def build_vocab(self) -> None:
-		if self.mode == "finish":
-			return
-			#raise RuntimeError("Vocabulary has been built, cannot build again.")
-		if self.train_tokens is None or self.test_tokens is None:
-			raise RuntimeError("Train tokens or test tokens should not be None")
-
-		if not self.special_appeared_in_data:
-			all_token_set = set(chain(self.train_tokens, self.test_tokens))
-			for special_token in self.special_tokens_mapping.values():
-				if special_token in all_token_set:
-					raise RuntimeError("Dataset file contains special tokens %s. If it is desired, try to set \
-						'special_appeared_in_data' to True in Vocab or Dataloader." % special_token)
-
-		exclude_set = set(self.special_tokens_mapping.values())
-		if self.mode != "frequent_specified":
-			assert self._all_vocab_list is None
-			vocab = sorted(Counter(self.train_tokens).most_common(), \
-						key=lambda pair: (-pair[1], pair[0]))
-			frequent_vocab = [x[0] for x in vocab if x[1] >= self.min_frequent_vocab_times and x[0] not in exclude_set]
-		else:
-			assert self._all_vocab_list is not None
-			frequent_vocab = self._all_vocab_list
-
-		exclude_set.update(frequent_vocab)
-		vocab = sorted(Counter(chain(self.train_tokens, self.test_tokens)).most_common(), \
-					   key=lambda pair: (-pair[1], pair[0]))
-		rare_vocab = [x[0] for x in vocab if x[1] >= self.min_rare_vocab_times \
-				and x[0] not in exclude_set]
-
-		self._all_vocab_list = list(self.special_tokens_mapping.values()) + frequent_vocab + rare_vocab
-		self._frequent_vocab_size = len(self.special_tokens_mapping) + len(frequent_vocab)
-
-		logging.info("frequent vocab list length = %d", self._frequent_vocab_size)
-		logging.info("frequent + rare vocab list length = %d", len(self._all_vocab_list))
-
-		self.word2id = {w: i for i, w in enumerate(self._all_vocab_list)}
-
-		self.train_tokens = None
-		self.test_tokens = None
-		self.mode = "finish"
+		pass
 
 	def get_special_tokens_id(self, name) -> int:
 		try:
@@ -422,19 +317,19 @@ class GeneralVocab(Vocab):
 
 	@property
 	def frequent_vocab_size(self):
-		return self._frequent_vocab_size
+		pass
 
 	@property
 	def all_vocab_size(self):
-		return len(self._all_vocab_list) # type: ignore
+		pass
 
 	@property
 	def frequent_vocab_list(self):
-		return self._all_vocab_list[:self._frequent_vocab_size] # type: ignore
+		pass
 
 	@property
 	def all_vocab_list(self):
-		return self._all_vocab_list[:] # type: ignore
+		pass
 
 	def get_special_tokens_mapping(self):
 		return self.special_tokens_mapping
@@ -474,19 +369,19 @@ class PretrainedVocab(Vocab):
 
 	@property
 	def frequent_vocab_size(self):
-		return self._inner_tokenizer.vocab_size
+		pass
 
 	@property
 	def all_vocab_size(self):
-		return self._inner_tokenizer.vocab_size
+		pass
 
 	@property
 	def frequent_vocab_list(self):
-		return self.convert_ids_to_tokens(list(range(self.frequent_vocab_size)))
+		pass
 
 	@property
 	def all_vocab_list(self):
-		return self.frequent_vocab_list
+		pass
 
 	def get_special_tokens_mapping(self):
 		old_key = ["pad_token", "unk_token", "bos_token", "eos_token", "sep_token", "cls_token", "mask_token"]
@@ -525,9 +420,7 @@ class SimpleVocab(Vocab):
 		self.mode = "init"
 
 	def add_tokens(self, tokens: List[str], vocab_from: str) -> None:
-		if self.mode == "init":
-			for token, num in Counter(tokens).items():
-				self._token_counter[token] += num
+		pass
 
 	add_tokens.__doc__ = Vocab.add_tokens.__doc__ + r"""
 	Notes:
@@ -535,17 +428,7 @@ class SimpleVocab(Vocab):
 	"""
 
 	def build_vocab(self):
-		if self.mode == "finish":
-			return
-		vocabs = sorted(
-			self._token_counter.items(),
-			key=lambda item:(-item[1], item[0])
-		)
-		self._all_vocab_list = [item[0] for item in vocabs]
-		self.word2id = {w: i for i, w in enumerate(self._all_vocab_list)}
-
-		self.mode = "finish"
-		self._token_counter = None
+		pass
 
 	def convert_tokens_to_ids(self, tokens: List[str], only_frequent_word=False) -> List[int]:
 		if self.word2id is None:
@@ -559,19 +442,19 @@ class SimpleVocab(Vocab):
 
 	@property
 	def frequent_vocab_size(self):
-		return len(self._all_vocab_list)
+		pass
 
 	@property
 	def all_vocab_size(self):
-		return len(self._all_vocab_list)
+		pass
 
 	@property
 	def frequent_vocab_list(self):
-		return self._all_vocab_list
+		pass
 
 	@property
 	def all_vocab_list(self):
-		return self._all_vocab_list
+		pass
 
 	def get_special_tokens_mapping(self) -> OrderedDictType[str, str]:
 		return {}

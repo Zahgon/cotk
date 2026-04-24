@@ -170,31 +170,7 @@ class LanguageProcessing(Dataloader):
 		Arguments:
 			fieldcontents (Dict[str, OrderedDictType[str, _FieldContent]]): fieldcontents for each set
 		'''
-		for set_name, fieldcontents_in_one_set in fieldcontents.items():
-			if not fieldcontents_in_one_set:
-				raise RuntimeError("no field specified")
-			with open("%s/%s.txt" % (self.file_path, set_name), encoding='utf-8') as f_file:
-				line_cnt = 0
-				file_iterator = iter(f_file)
-				while True:
-					try:
-						for _, fieldcontent in fieldcontents_in_one_set.items():
-							line_add = fieldcontent.read_next(file_iterator)
-							if line_add == 0:
-								while True:
-									if next(file_iterator):
-										raise RuntimeError("the file %s corrupted at line %d" % (set_name, line_cnt))
-							line_cnt += line_add
-					except StopIteration:
-						break
-
-			sample_nums = [fieldcontent.get_data_number() for _, fieldcontent in fieldcontents_in_one_set.items()]
-			if not all([sample_num == sample_nums[0] for sample_num in sample_nums]):
-				raise RuntimeError("the file %s corrupted at end of the file")
-
-		for _, fieldcontents_in_one_set in fieldcontents.items():
-			for _, fieldcontent in fieldcontents_in_one_set.items():
-				fieldcontent.process_before_vocab()
+		pass
 
 	def _init_batch(self, fieldcontents: Dict[str, OrderedDictType[str, _FieldContent]]) -> \
 			Tuple[Dict[str, List[int]], Dict[str, int], Dict[str, Optional[int]]]:
@@ -203,18 +179,7 @@ class LanguageProcessing(Dataloader):
 		Arguments:
 			fieldcontents (Dict[str, OrderedDictType[str, _FieldContent]]): fieldcontents for each set.
 		'''
-		index: Dict[str, List[int]] = {}
-		batch_id: Dict[str, int] = {}
-		batch_size: Dict[str, Optional[int]] = {}
-
-		for set_name, fieldcontents_in_one_set in fieldcontents.items():
-			sample_nums = [fieldcontent.get_data_number() \
-					for _, fieldcontent in fieldcontents_in_one_set.items()]
-			batch_id[set_name] = 0
-			batch_size[set_name] = None
-			index[set_name] = list(range(sample_nums[0]))
-
-		return index, batch_id, batch_size
+		pass
 
 	def _get_data(self, fieldcontents: Dict[str, OrderedDictType[str, _FieldContent]]) -> \
 			Dict[str, Dict[str, Any]]:
@@ -222,17 +187,11 @@ class LanguageProcessing(Dataloader):
 		Arguments:
 			fieldcontents (Dict[str, OrderedDict[str, _FieldContent]]): fieldcontents for each set.
 		'''
-		data: Dict[str, Dict[str, Any]] = {}
-		for set_name, fieldcontents_in_one_set in sorted(fieldcontents.items()):
-			data[set_name] = {}
-			for field_name, fieldcontent in fieldcontents_in_one_set.items():
-				data[set_name][field_name] = fieldcontent.get_data()
-		return data
+		pass
 
 	def _build_vocabs(self):
 		'''Invoke build vocab for each vocabulary'''
-		for vocab in self.vocabs:
-			vocab.build_vocab()
+		pass
 
 	def _collect_vocabs_from_fields(self, fields: Dict[str, OrderedDictType[str, Field]])\
 			-> List[Vocab]:
@@ -240,13 +199,7 @@ class LanguageProcessing(Dataloader):
 		Arguments:
 			fieldcontents (Dict[str, OrderedDict[str, Field]]): field for each set.
 		'''
-		vocabs: List[Vocab] = []
-		for _, fields_in_one_set in sorted(fields.items()): # sort to keep order
-			for _, field in fields_in_one_set.items():
-				vocab = field.get_vocab()
-				if vocab is not None and vocab not in vocabs:
-					vocabs.append(vocab)
-		return vocabs
+		pass
 
 	def _collect_tokenizers_from_fields(self, fields: Dict[str, OrderedDictType[str, Field]])\
 			-> List[Tokenizer]:
@@ -254,15 +207,7 @@ class LanguageProcessing(Dataloader):
 		Arguments:
 			fieldcontents (Dict[str, OrderedDict[str, Field]]): field for each set.
 		'''
-		tokenizers: List[Tokenizer] = []
-		tokenizers_setting_hash: List[str] = []
-		for _, fields_in_one_set in sorted(fields.items()): # sort to keep order
-			for _, field in fields_in_one_set.items():
-				tokenizer = field.get_tokenizer()
-				if tokenizer is not None and tokenizer.get_setting_hash() not in tokenizers_setting_hash:
-					tokenizers.append(tokenizer)
-					tokenizers_setting_hash.append(tokenizer.get_setting_hash())
-		return tokenizers
+		pass
 
 	def _fill_field_and_create_content(self, set_name: str, fields: \
 				Union[OrderedDictType[str, Union[str, Field]], List[Tuple[str, Union[str, Field]]]], \
@@ -273,82 +218,34 @@ class LanguageProcessing(Dataloader):
 			set_name(str): name of the set
 			field (OrderedDictType[str, Union[str, Field]]): fields for the set.
 		'''
-
-		fieldcontents: OrderedDictType[str, _FieldContent] = OrderedDict()
-		new_fields: OrderedDictType[str, Field] = OrderedDict()
-
-		fields_iter: Iterable[Tuple[str, Union[str, Field]]]
-		if isinstance(fields, OrderedDict):
-			fields_iter = fields.items()
-		elif isinstance(fields, list):
-			fields_iter = fields
-		else:
-			raise TypeError("Unexpected Type for fields")
-
-		for name, field_name in fields_iter:
-			if isinstance(field_name, str):
-				field = Field.load_class(field_name)()
-			elif isinstance(field_name, Field):
-				field = field_name
-			else:
-				raise TypeError("Each value of `fields` must be a Field object or a string indicating the name of a Field class.")
-			fieldcontent = field._create(set_name) #pylint: disable=protected-access
-			fieldcontents[name] = fieldcontent
-			new_fields[name] = field
-		return new_fields, fieldcontents
+		pass
 
 	def _create_data_hash(self, fieldcontents):
-		raw_data_hash = sha256()
-		data_hash = sha256()
-		for _, fieldcontents_in_one_set in sorted(fieldcontents.items()):
-			for _, fieldcontent in fieldcontents_in_one_set.items():
-				raw_data_hash.update(dumps(fieldcontent.get_raw_data_hash()))
-				data_hash.update(dumps(fieldcontent.get_data_hash()))
-		return raw_data_hash.hexdigest(), data_hash.hexdigest()
+		pass
 
 	def _create_setting_hash(self):
-		setting_hash = sha256()
-		for _, fields_in_one_set in sorted(self.fields.items()):
-			for _, field in fields_in_one_set.items():
-				setting_hash.update(dumps(field._get_setting_hash(self.vocabs))) #pylint: disable=protected-access
-		for vocab in self.vocabs:
-			setting_hash.update(dumps(vocab.get_setting_hash()))
-		for tokenizer in self.tokenizers:
-			setting_hash.update(dumps(tokenizer.get_setting_hash()))
-		return setting_hash.hexdigest()
+		pass
 
 	def _create_vocab_hash(self):
-		vocab_hash = sha256()
-		for vocab in self.vocabs:
-			vocab_hash.update(dumps(vocab.get_vocab_hash()))
-		return vocab_hash.hexdigest()
+		pass
 
 	def get_default_vocab(self) -> Vocab:
 		'''Get the default :class:`Vocab` in this dataloader.
 		It can be set by :meth:`.set_default_field`.
 		'''
-		vocab = self.get_default_field().get_vocab()
-		if vocab is None:
-			raise ValueError("This field do not have vocab")
-		return vocab
+		pass
 
 	def get_default_tokenizer(self) -> Tokenizer:
 		'''Get the default :class:`Tokenizer` in this dataloader.
 		It can be set by :meth:`.set_default_field`.
 		'''
-		tokenizer = self.get_default_field().get_tokenizer()
-		if tokenizer is None:
-			raise ValueError("This field do not have tokenizer")
-		return tokenizer
+		pass
 
 	def get_default_field(self) -> Field:
 		'''Get the default :class:`Field` in this dataloader.
 		It can be set by :meth:`.set_default_field`.
 		'''
-		if self.default_field_name is None or self.default_field_set_name is None:
-			raise RuntimeError("No default field. \
-				Specify the default field by set_default_field.")
-		return self.fields[self.default_field_set_name][self.default_field_name]
+		pass
 
 	SET_NAME_DESCRIPTION = '''set_name (str): The name of set. For example: ``"train"``, ``"dev"``, ``"test"``.'''
 	FIELD_NAME_DESCRIPTION = '''field_name (str): The name of field.'''
@@ -380,12 +277,7 @@ class LanguageProcessing(Dataloader):
 			{SET_NAME_DESCRIPTION}
 			{FIELD_NAME_DESCRIPTION}
 		'''
-		if set_name not in self.fields:
-			raise KeyError("No such set named %s" % set_name)
-		elif field_name not in self.fields[set_name]:
-			raise KeyError("No such field named %s" % field_name)
-		self.default_field_set_name = set_name
-		self.default_field_name = field_name
+		pass
 
 		# tokenizer = self.fields[set_name][field_name].get_tokenizer()
 		# if tokenizer:
@@ -401,7 +293,7 @@ class LanguageProcessing(Dataloader):
 			{SET_NAME_DESCRIPTION}
 			{FIELD_NAME_DESCRIPTION}
 		'''
-		return self.fields[set_name][field_name]
+		pass
 
 	def get_general_hash(self) -> str:
 		'''General hash. Identifying all details in dataloader,
@@ -454,23 +346,7 @@ class LanguageProcessing(Dataloader):
 				default: if ``None``, last ``batch_size`` is used.
 			shuffle (bool): whether to shuffle the data. Default: ``True``.
 		'''
-		if set_name not in self.fields:
-			raise ValueError("No set named %s." % set_name)
-		if batch_size is None and self.batch_size[set_name] is None:
-			raise ValueError("You need batch_size to initialize.")
-		if shuffle:
-			# rng_state = random.getstate()
-			random.shuffle(self.index[set_name])
-			# random.setstate(rng_state)
-
-		self.batch_id[set_name] = 0
-		if batch_size is not None:
-			self.batch_size[set_name] = batch_size
-		batch_size_div = self.batch_size[set_name]
-		assert batch_size_div is not None
-		print("%s set restart, %d batches and %d left" % (set_name, \
-						len(self.index[set_name]) // batch_size_div, \
-						len(self.index[set_name]) % batch_size_div))
+		pass
 
 	_GET_BATCH_MORE_DOC = "Return a merged dict containing all the data from each field by calling :meth:`.field.get_batch`. " \
 		"See examples in subclasses for the return value of predefined tasks."
@@ -488,12 +364,7 @@ class LanguageProcessing(Dataloader):
 
 		{_GET_BATCH_EXAMPLE}
 		'''
-		if set_name not in self.fields:
-			raise ValueError("No set named %s." % set_name)
-		res: Dict[str, Any] = {}
-		for field_name, field_obj in self.fields[set_name].items():
-			res.update(field_obj.get_batch(field_name, self.data[set_name][field_name], indexes)) #pylint: disable=protected-access
-		return res
+		pass
 
 	IGNORE_LEFT_SAMPLES = "ignore_left_samples (bool): If the number of the samples is not divisible by ``batch_size``, " \
 			"ignore the left samples less than ``batch_size`` " \
@@ -517,24 +388,7 @@ class LanguageProcessing(Dataloader):
             >>>     print(data)
 
 		'''
-		if set_name not in self.fields:
-			raise ValueError("No set named %s." % set_name)
-		batch_size = self.batch_size[set_name]
-		if batch_size is None:
-			raise RuntimeError( \
-				"Please run restart before calling this function.")
-		batch_id = self.batch_id[set_name]
-
-		start, end = batch_id * \
-					 	batch_size, (batch_id + 1) * batch_size
-		if start >= len(self.index[set_name]):
-			return None
-		if ignore_left_samples and end > len(self.index[set_name]):
-			return None
-		index = self.index[set_name][start:end]
-		res = self.get_batch(set_name, index)
-		self.batch_id[set_name] += 1
-		return res
+		pass
 
 	def get_batches(self, set_name, batch_size=None, shuffle=True,
 			ignore_left_samples=False) -> Iterable[Dict[str, Any]]:
@@ -547,12 +401,7 @@ class LanguageProcessing(Dataloader):
 			shuffle (bool): whether to shuffle the data. Default: ``True``.
 			{IGNORE_LEFT_SAMPLES}
 		'''
-		self.restart(set_name, batch_size, shuffle)
-		while True:
-			res = self.get_next_batch(set_name, ignore_left_samples)
-			if res is None:
-				break
-			yield res
+		pass
 
 	def get_all_batch(self, set_name) -> Dict[str, List[Any]]:
 		r'''Concatenate all batches to a single dict, where padding will not be applied.
@@ -565,16 +414,7 @@ class LanguageProcessing(Dataloader):
 		Arguments:
 			{SET_NAME_DESCRIPTION}
 		'''
-		res: Dict[str, List[Any]] = {}
-		for idx in self.index[set_name]:
-			batch = self.get_batch(set_name, [idx])
-			for attr, val in batch.items():
-				if attr not in res:
-					res[attr] = []
-				if not isinstance(val, (list, np.ndarray)):
-					val = [val]
-				res[attr].extend(val)
-		return res
+		pass
 
 	# copy some functions from vocab
 	_VOCAB_MORE_DOCSTRING = '''It calls the identical method of the :class:`Vocab` instance ``vocab``,\

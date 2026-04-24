@@ -120,7 +120,7 @@ class SentenceClassification(LanguageProcessing):
 					]),
 			}
 		'''
-		return super().get_batch(set_name, indexes)
+		pass
 
 	def get_metric(self, prediction_key="prediction"):
 		'''Get metrics for accuracy. In other words, this function
@@ -137,12 +137,7 @@ class SentenceClassification(LanguageProcessing):
 		Returns:
 			A :class:`.metric.MetricChain` object.
 		'''
-		from ..metric import MetricChain, AccuracyMetric
-		metric = MetricChain()
-		metric.add_metric(AccuracyMetric(self, \
-										 label_key='label', \
-										 prediction_key=prediction_key))
-		return metric
+		pass
 
 
 class SST(SentenceClassification):

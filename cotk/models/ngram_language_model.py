@@ -59,10 +59,7 @@ class KneserNeyInterpolated:
 	@property
 	def vocab_size(self):
 		r"""the size of vocabulary"""
-		res = len(self.n2ngram2cnt[1])
-		if (self.unk_symbol, ) not in self.n2ngram2cnt[1]:
-			res += 1
-		return res
+		pass
 
 	def _mask_oov(self, ngram):
 		r'''Replace infrequent words (with counts less than ``cutoff``) with ``unk_symbol``
@@ -207,11 +204,11 @@ class KneserNeyInterpolated:
 
 	@classmethod
 	def _set_language_model(cls, language_model):
-		cls.language_model = language_model
+		pass
 
 	@classmethod
 	def _compute_sent_log_prob(cls, sent):
-		return cls.language_model.sent_log_prob(sent)
+		pass
 
 	def perplexity(self, corpus):
 		r'''Compute perplexity when generating the given ``corpus``

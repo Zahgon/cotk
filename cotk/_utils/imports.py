@@ -31,16 +31,10 @@ class LazyModule(object):
 		self._global_dict = global_dict
 
 	def _try_load(self):
-		if super().__getattribute__("_module_name") in sys.modules:
-			return sys.modules[super().__getattribute__("_module_name")]
-		else:
-			return None
+		pass
 
 	def _load(self):
-		module = importlib.import_module(super().__getattribute__("_module_name"))
-		global_dict = super().__getattribute__("_global_dict")
-		global_dict[super().__getattribute__("_module_name")] = module
-		return module
+		pass
 
 	def __getattribute__(self, key):
 		loaded = super().__getattribute__("_try_load")()
@@ -79,33 +73,13 @@ class LazyObject(object):
 		self._module_name = object_name.split('.')[0]
 
 	def _try_load_module(self):
-		if super().__getattribute__("_module_name") in sys.modules:
-			return sys.modules[super().__getattribute__("_module_name")]
-		else:
-			return None
+		pass
 
 	def _load_object(self):
-		mod = importlib.import_module(super().__getattribute__("_module_name"))
-		arr = super().__getattribute__("_object_name").split('.')
-		obj = getattr(mod, arr[1])
-		for i in range(2, len(arr)):
-			try:
-				obj = getattr(obj, arr[i])
-			except AttributeError:
-				raise AttributeError("No attribute %s in %s." % (arr[i], ".".join(arr[:i])))
-		return obj
+		pass
 
 	def _try_getattribute(self, key):
-		loaded = super().__getattribute__("_try_load_module")()
-		if loaded is not None:
-			return getattr(super().__getattribute__("_load_object")(), key)
-
-		try:
-			return super().__getattribute__(key)
-		except AttributeError:
-			pass
-
-		return None
+		pass
 
 
 	def __getattribute__(self, key):
@@ -128,14 +102,7 @@ class LazyObject(object):
 
 	@staticmethod
 	def peek(obj, key):
-		if isinstance(obj, LazyObject):
-			loaded = obj._try_load_module()
-			if loaded is not None:
-				return getattr(obj, key)
-			else:
-				return obj._try_getattribute(key)
-		else:
-			return None
+		pass
 
 class DummyObject(dict):
 	r'''Dummy Object for uninstalled modules. [deprecated]

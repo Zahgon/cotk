@@ -56,31 +56,13 @@ class DistinctNgramsCorpus(MetricBase):
 					...	    gen_key: [[4,5,3], [6,7,8,3]]
 					... }
 		'''
-		super().forward(data)
-		if self.tokenizer is None:
-			self._direct_forward(data)
-		else:
-			self._re_tokenize_forward(data)
+		pass
 
 	def _direct_forward(self, data):
-		gen = data[self.gen_key]
-
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen.")
-
-		for gen_sen in gen:
-			hyp = self.dataloader.convert_ids_to_tokens(gen_sen, remove_special=True, trim=True)
-			self.hyps.append(hyp)
+		pass
 
 	def _re_tokenize_forward(self, data):
-		gen = data[self.gen_key]
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen.")
-		#fill more typeerror hints
-
-		for gen_sen in gen:
-			hyp = self.dataloader.convert_ids_to_sentence(gen_sen, remove_special=True, trim=True)
-			self.hyps.append(hyp)
+		pass
 
 	def close(self):
 		'''

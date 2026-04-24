@@ -105,167 +105,13 @@ class PerplexityMetric(MetricBase):
 			``data[gen_log_prob_key]`` must be processed after log_softmax. That means,
 			``np.sum(np.exp(gen_log_prob), -1)`` equals ``np.ones((batch_size, gen_sentence_length))``
 		'''
-		super().forward(data)
-		resp_allvocabs = data[self.reference_allvocabs_key]
-		resp_length = data[self.reference_len_key]
-		gen_log_prob = data[self.gen_log_prob_key]
-
-		if not isinstance(resp_allvocabs, (torch.Tensor, np.ndarray, list)):
-			raise TypeError("Unknown type for resp_allvocabs.")
-		if not isinstance(gen_log_prob, (torch.Tensor, np.ndarray, list)):
-			raise TypeError("Unknown type for gen_log_prob")
-		if not isinstance(resp_length, (list, np.ndarray)):
-			raise TypeError("Unknown type for resp_length")
-
-		if self.engine_version == "unknown":
-			if isinstance(gen_log_prob, torch.Tensor):
-				self.engine_version = "pytorch"
-			else:
-				self.engine_version = "normal"
-
-		if (self.engine_version == "pytorch") != isinstance(gen_log_prob, torch.Tensor):
-			raise TypeError("If you want to use pytorch, `gen_log_prob` \
-				should always be torch.Tensor. It can't mix with list or numpy.ndarray.")
-
-		if self.engine_version == "pytorch":
-			if not isinstance(resp_allvocabs, torch.Tensor):
-				resp_allvocabs = gen_log_prob.new_tensor(resp_allvocabs).long()
-			with torch.no_grad():
-				self._pytorch_forward(resp_allvocabs, resp_length, gen_log_prob)
-		else:
-			self._normal_forward(resp_allvocabs, resp_length, gen_log_prob)
+		pass
 
 	def _normal_forward(self, resp_allvocabs, resp_length, gen_log_prob):
-		if len(resp_allvocabs) != len(resp_length) or len(resp_allvocabs) != len(gen_log_prob):
-			raise ValueError("Batch num of arguments is not matched.")
-
-		# perform random check to assert the probability is valid
-		checkid = random.randint(0, len(resp_length)-1)
-		if resp_length[checkid] < 2:
-			raise ValueError("resp_length must no less than 2, because <go> and <eos> are always included.")
-		checkrow = random.randint(0, resp_length[checkid]-2)
-
-		random_check_expsum = float(np.sum(np.exp(gen_log_prob[checkid][checkrow])))
-		if not np.isclose(random_check_expsum, 1):
-			raise ValueError("data[gen_log_prob_key] must be processed after log_softmax. \
-				gen_log_prob[%d][%d] exp sum is equal to %f." % (checkid, checkrow, \
-				random_check_expsum))
-
-		relevant_data = []
-		for i, resp_len in enumerate(resp_length):
-			if resp_len < 2:
-				raise ValueError("resp_length must no less than 2, because <go> and <eos> are always included.")
-
-			resp_now = np.array(resp_allvocabs[i][1:resp_len])
-			gen_now = np.array(gen_log_prob[i])
-			#relevant_data.append(resp_now.tolist())
-			relevant_data.append(self.dataloader.convert_ids_to_tokens(resp_now.tolist()))
-
-			if len(resp_now.shape) != 1:
-				raise ValueError("resp_allvocabs need to be 2 dimension")
-			if len(gen_now.shape) != 2:
-				raise ValueError("gen_log_prob need to be 3 dimension")
-
-			# perform full check to assert the probability is valid
-			if self.full_check:
-				expsum = np.sum(np.exp(gen_now[:resp_len-1]), -1)
-				if not np.allclose(expsum, [1] * (resp_len - 1), rtol=1e-3):
-					raise ValueError("data[gen_log_prob_key] must be processed after log_softmax.")
-
-			if not self.generate_rare_vocab:
-				if gen_now.shape[1] != self.dataloader.frequent_vocab_size:
-					raise ValueError(("The third dimension gen_log_prob should be equals to frequent_vocab_size when "
-						"generate_rare_vocab = False, "
-						"but %d != %d") % (gen_now.shape[1], self.dataloader.frequent_vocab_size))
-			else:
-				if gen_now.shape[1] != self.dataloader.all_vocab_size:
-					raise ValueError(("The third dimension gen_log_prob should be equals to all_vocab_size "
-						"when generate_rare_vocab = True, "
-						"but %d != %d") % (gen_now.shape[1], self.dataloader.all_vocab_size))
-
-			resp = resp_now
-			self.resp.append(resp)
-			#self.resp_length.append(resp_len)
-
-			resp_known = resp.copy()
-			if not self.generate_rare_vocab and self.have_unk:
-				#resp_known[resp_known >= self.dataloader.all_vocab_size] = self.dataloader.unk_id
-				resp_known[resp_known >= self.dataloader.frequent_vocab_size] = self.dataloader.unk_id
-
-			self.gen_valid_log_prob.append(gen_now[list(range(resp_len-1)), resp_known])
-			if self.have_unk:
-				self.gen_unk_log_prob.append(gen_now[:resp_len-1, self.dataloader.unk_id])
-
-		self._hash_unordered_list(relevant_data)
+		pass
 
 	def _pytorch_forward(self, resp_allvocabs, resp_length, gen_log_prob):
-		if len(resp_allvocabs) != len(resp_length) or len(resp_allvocabs) != len(gen_log_prob):
-			raise ValueError("Batch num of arguments is not matched.")
-		if len(resp_allvocabs.shape) != 2:
-			raise ValueError("resp_allvocabs need to be 2 dimension")
-		if len(gen_log_prob.shape) != 3:
-			raise ValueError("gen_log_prob need to be 3 dimension")
-
-		relevant_data = []
-		for i, resp_len in enumerate(resp_length):
-			if resp_len < 2:
-				raise ValueError("resp_length must no less than 2, because <go> and <eos> are always included.")
-
-			resp_now = resp_allvocabs[i, 1:resp_len]
-			gen_now = gen_log_prob[i, :resp_len - 1]
-			relevant_data.append(self.dataloader.convert_ids_to_tokens(resp_now.tolist()))
-
-			# perform full check to assert the probability is valid
-			expsum = gen_now.exp().sum(-1)
-			if not expsum.allclose(torch.ones_like(expsum), rtol=1e-3):
-				raise ValueError("data[gen_log_prob_key] must be processed after log_softmax.")
-
-			if not self.generate_rare_vocab:
-				if gen_now.shape[1] != self.dataloader.frequent_vocab_size:
-					raise ValueError(("The third dimension gen_log_prob should be equals to frequent_vocab_size when "
-						"generate_rare_vocab = False, "
-						"but %d != %d") % (gen_now.shape[1], self.dataloader.frequent_vocab_size))
-			else:
-				if gen_now.shape[1] != self.dataloader.all_vocab_size:
-					raise ValueError(("The third dimension gen_log_prob should be equals to all_vocab_size "
-						"when generate_rare_vocab = True, "
-						"but %d != %d") % (gen_now.shape[1], self.dataloader.all_vocab_size))
-
-			resp_known = resp_now.clone()
-			if not self.generate_rare_vocab and self.have_unk:
-				resp_known[resp_known >= self.dataloader.frequent_vocab_size] = self.dataloader.unk_id
-
-			unk_id = self.dataloader.unk_id if self.have_unk else None
-			frequent_vocab_size = self.dataloader.frequent_vocab_size
-			rare_vocab_size = self.dataloader.all_vocab_size - frequent_vocab_size
-
-			# calc normal vocab
-			if self.have_unk:
-				normal_mask = ((resp_now != unk_id) & (resp_now < frequent_vocab_size)).float()
-			else:
-				normal_mask = (resp_now < frequent_vocab_size).float()
-			word_loss = -(gen_now.gather(-1, resp_known.unsqueeze(1))[:, 0] * normal_mask).sum()
-			length_sum = normal_mask.sum()
-			# calc invalid vocab
-			# smoothing from unk
-			if self.have_unk:
-				invalid_mask = (resp_now >= frequent_vocab_size).float()
-				invalid_log_prob = (gen_now[:, unk_id] - \
-							(torch.ones_like(gen_now[:, unk_id]) * rare_vocab_size).log()) * invalid_mask
-
-				if self.generate_rare_vocab:
-					extra_invalid_log_prob = gen_now.gather(-1, resp_now.unsqueeze(1))[:, 0] * invalid_mask
-					word_loss -= ((invalid_log_prob.exp() + extra_invalid_log_prob.exp()).log() \
-							* invalid_mask).sum()
-				else:
-					word_loss -= invalid_log_prob.sum()
-
-				length_sum += invalid_mask.sum()
-
-			self.word_loss += word_loss.tolist()
-			self.length_sum += length_sum.tolist()
-
-		self._hash_unordered_list(relevant_data)
+		pass
 
 	@classmethod
 	def _run_f(cls, ele):
@@ -275,32 +121,7 @@ class PerplexityMetric(MetricBase):
 
 			* tuple: sum of log perplexity and sum of sentence length.
 		'''
-		valid_log_prob, unk_log_prob, resp_now, \
-				invalid_vocab, vocab_size, all_vocab_size, unk_id = ele
-
-		# calc normal vocab
-		if unk_id is not None:
-			normal_idx = np.where(np.logical_and(resp_now != unk_id, \
-									resp_now < vocab_size))
-		else:
-			normal_idx = np.where(resp_now < vocab_size)
-		word_loss = -np.sum(valid_log_prob[normal_idx])
-		length_sum = np.array(normal_idx).shape[1]
-		# calc invalid vocab
-		# smoothing from unk
-		if unk_id is not None:
-			invalid_idx = np.where(resp_now >= vocab_size)
-			invalid_log_prob = unk_log_prob[invalid_idx] - np.log(all_vocab_size - vocab_size)
-			if invalid_vocab:
-				extra_invalid_log_prob = valid_log_prob[invalid_idx]
-				word_loss -= np.sum(np.log( \
-						np.exp(invalid_log_prob) + np.exp(extra_invalid_log_prob) \
-					))
-			else:
-				word_loss -= np.sum(invalid_log_prob)
-			length_sum += np.array(invalid_idx).shape[1]
-
-		return word_loss, length_sum
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		r'''Return a dict which contains
@@ -441,29 +262,7 @@ class MultiTurnPerplexityMetric(MetricBase):
 			``np.sum(np.exp(multi_turn_gen_log_prob_key), -1)`` equals
 			``np.ones((batch_size, ~gen_sentence_length))``
 		'''
-		super().forward(data)
-		reference_allvocabs = data[self.multi_turn_reference_allvocabs_key]
-		length = data[self.multi_turn_reference_len_key]
-		gen_log_prob = data[self.multi_turn_gen_log_prob_key]
-
-		if not isinstance(reference_allvocabs, (torch.Tensor, np.ndarray, list)):
-			raise TypeError("Unknown type for reference_allvocabs.")
-		if not isinstance(length, (np.ndarray, list)):
-			raise TypeError("Unknown type for length")
-		if not isinstance(gen_log_prob, (torch.Tensor, list, np.ndarray)):
-			raise TypeError("Unknown type for gen_log_prob")
-
-		if len(length) != len(reference_allvocabs) or len(length) != len(gen_log_prob):
-			raise ValueError("Batch num is not matched.")
-
-		for i, sent_length in enumerate(length):
-			# Pass turn as batch for sub_metric, the result will be same.
-			turn_length = sent_length.index(0) if 0 in sent_length else len(sent_length)
-			if len(reference_allvocabs[i]) < turn_length or len(gen_log_prob[i]) < turn_length:
-				raise ValueError("Turn num is not matched.")
-			self.sub_metric.forward({"ref_allvocabs": reference_allvocabs[i][:turn_length], \
-					"ref_length": sent_length[:turn_length], \
-					"gen_log_prob": gen_log_prob[i][:turn_length]})
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		r'''Return a dict which contains

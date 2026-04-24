@@ -38,9 +38,7 @@ class UnorderedSha256:
 
 def dumps_json(obj) -> bytes:
 	'''Generate bytes to identify the object by json serialization'''
-	if isinstance(obj, (str, int, float, bool)):
-		return str(obj).encode('utf-8')
-	return json.dumps(obj, sort_keys=True).encode('utf-8')
+	pass
 
 
 def dumps(obj) -> bytes:
@@ -64,7 +62,7 @@ def convert_obj(obj):
 
 
 def convert_dict(obj):
-	return type(obj), [(convert_obj(k), convert_obj(v)) for k, v in sorted(obj.items())]
+	pass
 
 
 def convert_ordered_dict(obj):
@@ -72,12 +70,12 @@ def convert_ordered_dict(obj):
 
 
 def convert_ordered_iterable(obj):
-	return type(obj), [convert_obj(item) for item in obj]
+	pass
 
 
 def convert_unordered_iterable(obj):
 	# Elements in a set or a frozenset is unordered. Sort them before dumps.
-	return type(obj), [convert_obj(item) for item in sorted(obj)]
+	pass
 
 
 special_type_processing_functions = {

@@ -54,12 +54,12 @@ class Field(LoadClassInterface, metaclass=DocStringInheritor):
 	def get_vocab(self) -> Optional[Vocab]:
 		'''Get :class:`Vocab` object for the field. ``None`` if the field do not have a :class:`Vocab`.
 		'''
-		return None
+		pass
 
 	def get_tokenizer(self) -> Optional[Tokenizer]:
 		'''Get :class:`Tokenizer` object for the field. ``None`` if the field do not have a :class:`Tokenizer`.
 		'''
-		return None
+		pass
 
 	def _create(self, set_name: str) -> "_FieldContent":
 		'''Create a :class:`_FieldContent` to store data which have been read.
@@ -131,12 +131,7 @@ class _FieldContent(metaclass=DocStringInheritor):
 		Arguments:
 			dataset (Iterator[str]): An iterator of the data file.
 		'''
-		if not isinstance(self._original_data, list):
-			raise RuntimeError("read_next must be called before get_data")
-		sent, lines = self._get_next(dataset)
-		if lines != 0:
-			self._original_data.append(sent)
-		return lines
+		pass
 
 	def process_before_vocab(self):
 		'''This function is called after all elements read, but before building vocabulary.
@@ -146,7 +141,7 @@ class _FieldContent(metaclass=DocStringInheritor):
 	def get_data_number(self) -> int:
 		'''Get the number of elements in this field.
 		'''
-		return len(self._original_data)
+		pass
 
 	def get_data(self) -> Any:
 		'''Get the data, which will be stored in the :class:`LanguageProcessing`.
@@ -194,27 +189,14 @@ class _SentenceContent(_FieldContent):
 			>>> field_content._get_next(dataset)
 			"I love deep learning", 1
 		"""
-		return next(dataset).rstrip(), 1
+		pass
 
 	def process_before_vocab(self):
-		raw_data_hash = UnorderedSha256()
-		for data in self._original_data:
-			raw_data_hash.update_data(dumps(data))
-		self._raw_data_hash = raw_data_hash.hexdigest()
-
-		self._tmp_tokenized_data = tokenized_sents = self.field.tokenize_sentences(self._original_data)
-
-		data_hash = UnorderedSha256()
-		for tokenized_sent in tokenized_sents:
-			data_hash.update_data(dumps(tokenized_sent))
-		self._data_hash = data_hash.hexdigest()
-
-		self.field.get_vocab().add_tokens(list(chain(*tokenized_sents)), self.vocab_from)
+		pass
 
 	def get_data(self):
 		# allvocabs
-		id_data = self.field.process_sentences(self._tmp_tokenized_data)
-		return {"id": id_data, "str": self._original_data}
+		pass
 
 	if is_build_private_docs():
 		_GET_BATCH_DATA_DOCSTRING = 'data (Dict[str, Any]): the object returned by :meth:`_SentenceContent.get_data`. '\
@@ -323,35 +305,20 @@ class Sentence(Field):
 			raise TypeError("Unknown tokenizer type")
 
 	def _create(self, set_name) -> _SentenceContent:
-		try:
-			return _SentenceContent(self, self.vocab_from_mappings[set_name])
-		except KeyError:
-			raise KeyError("Unknown set_name %s, do not specify in the vocab_from_mappings" % set_name) from None
+		pass
 
 	@classmethod
 	def get_pretrained_class(cls, pretrained):
-		return {
-			"gpt2": SentenceGPT2,
-			"bert": SentenceBERT
-		}[pretrained]
+		pass
 
 	def get_tokenizer(self):
-		return self.tokenizer
+		pass
 
 	def get_vocab(self):
-		return self.vocab
+		pass
 
 	def _get_setting_hash(self, vocabs) -> str:
-		return hashlib.sha256(dumps(
-			[self.__class__.__name__, \
-				#tokenizer_id, \
-				self.tokenizer.get_setting_hash(), \
-				vocabs.index(self.vocab), \
-				#self.vocab.get_setting_hash(), \
-				self.vocab_from_mappings, \
-				self.max_sent_length, \
-				self.convert_to_lower_letter \
-			])).hexdigest()
+		pass
 
 	_SENTENCE_MORE_DOCSTRING = ""
 	def tokenize_sentences(self, sentences: List[str]) -> List[List[str]]:
@@ -431,8 +398,7 @@ class Sentence(Field):
 		Arguments:
 			sentence (str): The sentence to be converted.{CONVERT_TO_ID_ARG}
 		'''
-		return self.process_sentences([sentence], add_special=add_special, \
-				only_frequent_word=only_frequent_word, cut=False)[0]
+		pass
 
 	def add_special_to_ids(self, ids: List[int]) -> List[int]:
 		'''Add special tokens, such as ``go_id`` or ``eos_id`` to the input ``ids``. {_SENTENCE_MORE_DOCSTRING}
@@ -475,30 +441,7 @@ class Sentence(Field):
 			{PROCESS_ARG}
 			cut (bool, optional): Whether to cut sentences with too many tokens. Default: ``True``.
 		'''
-		# sentences: : Union[List[str], List[List[str]]]
-		if not sentences:
-			raise ValueError("sentences must not be empty.")
-		# list of sentences
-		if isinstance(sentences[0], str):
-			sentences = self.tokenize_sentences(sentences)
-		elif not sentences[0]:
-			raise ValueError("sentences[0] must not be an empty string.")
-
-		# list of list of str
-		sentences = [self.convert_tokens_to_ids(tokens, add_special=add_special, only_frequent_word=only_frequent_word) for tokens in sentences]
-		# list of list of id
-
-		if cut and self.max_sent_length is not None:
-			before_lengths = [len(sentence) for sentence in sentences]
-			sentences = [sentence[:self.max_sent_length] for sentence in sentences]
-			after_lengths = [len(sentence) for sentence in sentences]
-			if len(sentences) > 1:
-				logging.info("max length before cut: %d, cut percent: %.2f%%" % (
-					max(before_lengths),
-					(sum(before_lengths) - sum(after_lengths)) / sum(before_lengths) * 100)
-							 )
-		# sentence cut
-		return sentences
+		pass
 
 	if is_build_private_docs():
 		_GET_BATCH_DATA_DOCSTRING = '''data (Any): the object returned by :meth:`_SentenceContent.get_data`'''
@@ -621,20 +564,7 @@ class SentenceDefault(Sentence):
 			}
 	"""
 	def get_batch(self, name: str, data: Dict[str, Any], indexes: List[int]) -> Dict[str, Any]:
-		if not isinstance(self.vocab, GeneralVocab):
-			raise RuntimeError("Subclass must override get_batch if self.vocab is not a GeneralVocab.")
-		res: Dict[str, Any] = {}
-		data_id, data_str = data["id"], data["str"]
-		batch_size = len(indexes)
-		res[name + "_length"] = np.array([len(data_id[i]) for i in indexes], dtype=int)
-		res_sent = res[name] = np.ones((batch_size, np.max(res[name + "_length"])), dtype=int) * self.vocab.pad_id
-		for i, j in enumerate(indexes):
-			sent = data_id[j]
-			res_sent[i, :len(sent)] = sent
-		res[name + "_allvocabs"] = res_sent.copy()
-		res_sent[res_sent >= self.vocab.frequent_vocab_size] = self.vocab.unk_id
-		res[name + "_str"] = [data_str[i] for i in indexes]
-		return res
+		pass
 
 	def trim_in_ids(self, ids: List[int]) -> List[int]:
 		ids = trim_before_target(list(ids), self.vocab.eos_id)
@@ -695,20 +625,20 @@ class SentenceGPT2(Sentence):
 			{
 				"sent": numpy.array([
 					[413, 6, 134, 321, 407, 107, 157, 121, 372, 201, 402, 105, 413, 413, 413, 413],
-						# ['<|endoftext|>', 'A', 'Ġbicycle', 'Ġreplica', 'Ġwith', 'Ġa', 'Ġclock', 'Ġas', 'Ġthe',
-						#	'Ġfront', 'Ġwheel', 'Ġ.', '<|endoftext|>', '<|endoftext|>', '<|endoftext|>', '<|endoftext|>']
+						# ['<|endoftext|>', 'A', 'Ä bicycle', 'Ä replica', 'Ä with', 'Ä a', 'Ä clock', 'Ä as', 'Ä the',
+						#	'Ä front', 'Ä wheel', 'Ä .', '<|endoftext|>', '<|endoftext|>', '<|endoftext|>', '<|endoftext|>']
 					[413, 6, 149, 370, 330, 384, 126, 298, 236, 130, 107, 255, 298, 149, 105, 413],
-						# ['<|endoftext|>', 'A', 'Ġcar', 'Ġthat', 'Ġseems', 'Ġto', 'Ġbe', 'Ġparked', 'Ġillegally',
-						#	'Ġbehind', 'Ġa', 'Ġlegally', 'Ġparked', 'Ġcar', 'Ġ.', '<|endoftext|>']
+						# ['<|endoftext|>', 'A', 'Ä car', 'Ä that', 'Ä seems', 'Ä to', 'Ä be', 'Ä parked', 'Ä illegally',
+						#	'Ä behind', 'Ä a', 'Ä legally', 'Ä parked', 'Ä car', 'Ä .', '<|endoftext|>']
 				]),
 				"sent_length": numpy.array([13, 16]), # length of sentences
 				"sent_allvocabs": numpy.array([
 					[413, 6, 134, 321, 407, 107, 157, 121, 372, 201, 402, 105, 413, 413, 413, 413],
-						# ['<|endoftext|>', 'A', 'Ġbicycle', 'Ġreplica', 'Ġwith', 'Ġa', 'Ġclock', 'Ġas', 'Ġthe',
-						#	'Ġfront', 'Ġwheel', 'Ġ.', '<|endoftext|>', '<|endoftext|>', '<|endoftext|>', '<|endoftext|>']
+						# ['<|endoftext|>', 'A', 'Ä bicycle', 'Ä replica', 'Ä with', 'Ä a', 'Ä clock', 'Ä as', 'Ä the',
+						#	'Ä front', 'Ä wheel', 'Ä .', '<|endoftext|>', '<|endoftext|>', '<|endoftext|>', '<|endoftext|>']
 					[413, 6, 149, 370, 330, 384, 126, 298, 236, 130, 107, 255, 298, 149, 105, 413],
-						# ['<|endoftext|>', 'A', 'Ġcar', 'Ġthat', 'Ġseems', 'Ġto', 'Ġbe', 'Ġparked', 'Ġillegally',
-						#	'Ġbehind', 'Ġa', 'Ġlegally', 'Ġparked', 'Ġcar', 'Ġ.', '<|endoftext|>']
+						# ['<|endoftext|>', 'A', 'Ä car', 'Ä that', 'Ä seems', 'Ä to', 'Ä be', 'Ä parked', 'Ä illegally',
+						#	'Ä behind', 'Ä a', 'Ä legally', 'Ä parked', 'Ä car', 'Ä .', '<|endoftext|>']
 				]),
 				"sent_str": [
 					"A bicycle replica with a clock as the front wheel .",
@@ -717,19 +647,7 @@ class SentenceGPT2(Sentence):
 			}
 		"""
 	def get_batch(self, name: str, data: Dict[str, Any], indexes: List[int]) -> Dict[str, Any]:
-		res: Dict[str, Any] = {}
-		data_id, data_str = data["id"], data["str"]
-		batch_size = len(indexes)
-		res[name + "_length"] = np.array([len(data_id[i]) for i in indexes], dtype=int)
-		res_sent = res[name] = np.ones((batch_size, np.max(res[name + "_length"])), dtype=int) * self.vocab.eos_id
-		#res_attn = res[name + "_attnmask"] = np.zeros((batch_size, np.max(res[name + "_length"])), dtype=int)
-		for i, j in enumerate(indexes):
-			sent = data_id[j]
-			res_sent[i, :len(sent)] = sent
-		#	res_attn[i, :len(sent)] = 1
-		res[name + "_allvocabs"] = res_sent.copy()
-		res[name + "_str"] = [data_str[i] for i in indexes]
-		return res
+		pass
 
 	def trim_in_ids(self, ids: List[int]) -> List[int]:
 		if ids[0] == self.vocab.eos_id:
@@ -807,19 +725,7 @@ class SentenceBERT(Sentence):
 		"""
 
 	def get_batch(self, name: str, data: Dict[str, Any], indexes: List[int]) -> Dict[str, Any]:
-		res: Dict[str, Any] = {}
-		data_id, data_str = data["id"], data["str"]
-		batch_size = len(indexes)
-		res[name + "_length"] = np.array([len(data_id[i]) for i in indexes], dtype=int)
-		res_sent = res[name] = np.ones((batch_size, np.max(res[name + "_length"])), dtype=int) * self.vocab.pad_id
-		#res_attn = res[name + "_attnmask"] = np.zeros((batch_size, np.max(res[name + "_length"])), dtype=int)
-		for i, j in enumerate(indexes):
-			sent = data_id[j]
-			res_sent[i, :len(sent)] = sent
-		#	res_attn[i, :len(sent)] = 1
-		res[name + "_allvocabs"] = res_sent.copy()
-		res[name + "_str"] = [data_str[i] for i in indexes]
-		return res
+		pass
 
 	def trim_in_ids(self, ids: List[int]) -> List[int]:
 		# The first token can't be the sep token
@@ -855,39 +761,13 @@ class _SessionContent(_FieldContent):
 			>>> field_content._get_next(dataset)
 			(['c', 'd', 'e'], 3)  # The second(last) session. For the last session, it doesn't matter whether it's followed by '\n'.
 		"""
-		session: List[str] = []
-		lineno = 0
-		while True:
-			try:
-				line = next(dataset)
-				lineno += 1
-				if line == '\n':
-					break
-				session.append(line.rstrip())
-			except StopIteration:
-				break
-		if not session:
-			raise StopIteration
-		return session, lineno
+		pass
 
 	def process_before_vocab(self):
-		raw_data_hash = UnorderedSha256()
-		for data in self._original_data:
-			raw_data_hash.update_data(dumps(data))
-		self._raw_data_hash = raw_data_hash.hexdigest()
-
-		self._tmp_tokenized_data = tokenized_sessions = self.field.tokenize_sessions(self._original_data)
-
-		data_hash = UnorderedSha256()
-		for tokenized_data in self._tmp_tokenized_data:
-			data_hash.update_data(dumps(tokenized_data))
-		self._data_hash = data_hash.hexdigest()
-
-		self.field.get_vocab().add_tokens(list(chain(*chain(*tokenized_sessions))), self.vocab_from)
+		pass
 
 	def get_data(self) -> Dict[str, list]:
-		id_data = self.field.process_sessions(self._tmp_tokenized_data)
-		return {"id": id_data, "str": self._original_data}
+		pass
 
 class Session(Sentence):
 	"""Bases: :class:`.dataloader.Field`
@@ -958,7 +838,7 @@ class Session(Sentence):
 		* If ``self.max_turn_length`` is not ``None`` and ``cut`` is ``True``,
 		  sessions, whose length are more than ``self.max_turn_length``, are
 		  shorten to first ``self.max_turn_length`` sentences.
-		* If sessions haven’t been tokenized, tokenize them by invoking :meth:`self.tokenize_sessions`
+		* If sessions havenâ€™t been tokenized, tokenize them by invoking :meth:`self.tokenize_sessions`
 		* Then, convert the list of tokens to a list of ids.
 		* If ``self.max_sent_length`` is not ``None`` and ``cut`` is ``True``,
 		  sentences, whose length are more than ``self.max_sent_length``, are
@@ -972,31 +852,10 @@ class Session(Sentence):
 			{PROCESS_ARG}
 			cut (bool, optional): Whether to cut sessions/sentences with too many sentences/tokens. Default: ``True``.
 		"""
-		# Cut sessions.
-		# If a session's turn length > `self.max_turn_length`, retain the first `self.max_turn_length` sentences and discard the rest.
-		if cut and self.max_turn_length is not None:
-			turn_length_before_cut = list(map(len, sessions))
-			max_turn_length_before_cut = max(turn_length_before_cut)
-			sessions = [session[:self.max_turn_length] for session in sessions]
-			turn_length_after_cut = list(map(len, sessions))
-			if len(sessions) > 1:
-				logging.info("max turn length before cut: %d, cut percent: %.2f%%" % (
-					max_turn_length_before_cut,
-					100 * (1 - sum(turn_length_after_cut) / sum(turn_length_before_cut)))
-							 )
-
-		sentences: List[TokenizedSentenceType]
-		session_length: List[int]
-		sentences, session_lengths = chain_sessions(sessions)
-		processed_sessions = self.process_sentences(sentences, add_special=add_special, only_frequent_word=only_frequent_word, cut=cut)
-		processed_sessions = restore_sessions(processed_sessions, session_lengths)
-		return processed_sessions
+		pass
 
 	def _create(self, set_name) -> _SessionContent:
-		try:
-			return _SessionContent(self, self.vocab_from_mappings[set_name])
-		except KeyError:
-			raise KeyError("Unknown set_name %s, do not specify in the vocab_from_mappings" % set_name) from None
+		pass
 
 	def convert_multi_turn_tokens_to_ids(self, session: List[List[str]], add_special=False, only_frequent_word=False) -> \
 	List[List[int]]:
@@ -1005,7 +864,7 @@ class Session(Sentence):
 		Arguments:
 			session (List[List[str]]): The tokenized sentences to be converted.{CONVERT_TO_ID_ARG}
 		'''
-		return [self.convert_tokens_to_ids(sent, add_special, only_frequent_word) for sent in session]
+		pass
 
 	def convert_multi_turn_ids_to_tokens(self, session_ids, remove_special=True, trim=True):
 		'''Convert list of sentence ids to list of sentences. {_SESSION_MORE_DOCSTRING}
@@ -1013,7 +872,7 @@ class Session(Sentence):
 		Arguments:
 			session_ids (List[List[int]]): The sentence ids to be converted.{CONVERT_FROM_ID_ARG}
 		'''
-		return [self.convert_ids_to_tokens(sent_ids, remove_special, trim) for sent_ids in session_ids]
+		pass
 
 	def multi_turn_trim_in_ids(self, session_ids: List[List[int]]) -> List[List[int]]:
 		'''For each sentence ids in session,
@@ -1023,21 +882,15 @@ class Session(Sentence):
 		Arguments:
 			session_ids (List[List[int]]): The input ids of session.
 		'''
-		return [self.trim_in_ids(sent_ids) for sent_ids in session_ids]
+		pass
 
 	@classmethod
 	def get_pretrained_class(cls, pretrained):
-		return {
-			"gpt2": SessionGPT2,
-			"bert": SessionBERT
-		}[pretrained]
+		pass
 
 	@classmethod
 	def get_candidate_pretrained_class(cls, pretrained):
-		return {
-			"gpt2": SentenceCandidateGPT2,
-			"bert": SentenceCandidateBERT
-		}[pretrained]
+		pass
 
 
 class SessionDefault(Session):
@@ -1155,23 +1008,7 @@ class SessionDefault(Session):
 		}
 	"""
 	def get_batch(self, name: str, data: Dict[str, Any], indexes: List[int]) -> Dict[str, Any]:
-		if not isinstance(self.vocab, GeneralVocab):
-			raise RuntimeError("Subclass must override get_batch if self.vocab is not a GeneralVocab.")
-		res = {}
-		data_id, data_str = data['id'], data['str']
-		batch_size = len(indexes)
-		turn_lengths = res[name + "_turn_length"] = np.array([len(data_id[i]) for i in indexes], dtype=int)
-		res[name + "_sent_length"] = [[len(sent) for sent in data_id[i]] for i in indexes]
-		max_sent_length = max(map(max, res[name + "_sent_length"]))
-		res_session = res[name] = np.zeros((batch_size, turn_lengths.max(), max_sent_length), dtype=int)
-		for i, j in enumerate(indexes):
-			session = data_id[j]
-			session = [list(sent) + [0] * (max_sent_length-len(sent)) for sent in session]
-			res_session[i, :len(session)] = np.array(session, dtype=int)
-		res[name + "_allvocabs"] = res_session.copy()
-		res_session[res_session >= self.vocab.frequent_vocab_size] = self.vocab.unk_id
-		res[name + "_str"] = [data_str[i] for i in indexes]
-		return res
+		pass
 
 
 class SessionGPT2(Session):
@@ -1249,20 +1086,7 @@ class SessionGPT2(Session):
 
 
 	def get_batch(self, name: str, data: Dict[str, Any], indexes: List[int]) -> Dict[str, Any]:
-		res = {}
-		data_id, data_str = data['id'], data['str']
-		batch_size = len(indexes)
-		turn_lengths = res[name + "_turn_length"] = np.array([len(data_id[i]) for i in indexes], dtype=int)
-		res[name + "_sent_length"] = [[len(sent) for sent in data_id[i]] for i in indexes]
-		max_sent_length = max(map(max, res[name + "_sent_length"]))
-		res_session = res[name] = np.ones((batch_size, turn_lengths.max(), max_sent_length), dtype=int) * self.vocab.eos_id
-		for i, j in enumerate(indexes):
-			session = data_id[j]
-			session = [list(sent) + [self.vocab.eos_id] * (max_sent_length - len(sent)) for sent in session]
-			res_session[i, :len(session)] = np.array(session, dtype=int)
-		res[name + "_allvocabs"] = res_session.copy()
-		res[name + "_str"] = [data_str[i] for i in indexes]
-		return res
+		pass
 
 
 class SessionBERT(Session):
@@ -1340,20 +1164,7 @@ class SessionBERT(Session):
 
 
 	def get_batch(self, name: str, data: Dict[str, Any], indexes: List[int]) -> Dict[str, Any]:
-		res = {}
-		data_id, data_str = data['id'], data['str']
-		batch_size = len(indexes)
-		turn_lengths = res[name + "_turn_length"] = np.array([len(data_id[i]) for i in indexes], dtype=int)
-		res[name + "_sent_length"] = [[len(sent) for sent in data_id[i]] for i in indexes]
-		max_sent_length = max(map(max, res[name + "_sent_length"]))
-		res_session = res[name] = np.ones((batch_size, turn_lengths.max(), max_sent_length), dtype=int) * self.vocab.pad_id
-		for i, j in enumerate(indexes):
-			session = data_id[j]
-			session = [list(sent) + [self.vocab.pad_id] * (max_sent_length - len(sent)) for sent in session]
-			res_session[i, :len(session)] = np.array(session, dtype=int)
-		res[name + "_allvocabs"] = res_session.copy()
-		res[name + "_str"] = [data_str[i] for i in indexes]
-		return res
+		pass
 
 
 class SentenceCandidateDefault(SessionDefault):
@@ -1411,10 +1222,10 @@ class DenseLabel(Field):
 		This field reads one line per sample. The line must be an integer.
 	"""
 	def _create(self, set_name: str) -> "_FieldContent":
-		return _DenseLabelContent(self)
+		pass
 
 	def _get_setting_hash(self, vocabs) -> str:
-		return hashlib.sha256(dumps([self.__class__.__name__])).hexdigest()
+		pass
 	
 	_GET_BATCH_RETURN_VALUE = """
 		The function will return a dict, containing:
@@ -1437,9 +1248,7 @@ class DenseLabel(Field):
 		"""
 
 	def get_batch(self, name: str, data: Dict[str, Any], indexes: List[int]) -> Dict[str, Any]:
-		ids = [data['label'][i] for i in indexes]
-		ids = np.array(ids, dtype=int)
-		return {name: ids}
+		pass
 
 
 class _DenseLabelContent(_FieldContent):
@@ -1464,19 +1273,13 @@ class _DenseLabelContent(_FieldContent):
 			(0, 1)
 
 		"""
-		label = next(dataset).strip()
-		if not label:
-			return None, 0
-		return int(label), 1
+		pass
 
 	def get_data(self) -> Any:
-		return {"label": self._original_data}
+		pass
 
 	def process_before_vocab(self):
-		raw_data_hash = UnorderedSha256()
-		for label in self._original_data:
-			raw_data_hash.update_data(dumps(label))
-		self._data_hash = self._raw_data_hash = raw_data_hash.hexdigest()
+		pass
 
 
 class SparseLabel(Field):
@@ -1504,7 +1307,7 @@ class SparseLabel(Field):
 				raise TypeError("vocab for SparseLabel must be a SimpleVocab object.")
 
 	def get_vocab(self) -> Optional[Vocab]:
-		return self.vocab
+		pass
 
 	_GET_BATCH_DATA_DOCSTRING = '''data (Dict[str, Any]): the object returned by :meth:`_SparseLabelContent.get_data`.
 	 	data['str'] is raw labels.
@@ -1537,19 +1340,13 @@ class SparseLabel(Field):
 			}
 	"""
 	def get_batch(self, name: str, data, indexes: List[int]) -> Dict[str, Any]:
-		ids = [data['id'][i] for i in indexes]
-		ids = np.array(ids, dtype=int)
-		batch_size = len(ids)
-		return {
-			name + "_id": ids,
-			name +"_str": [data['str'][i] for i in indexes]
-		}
+		pass
 
 	def _get_setting_hash(self, vocabs) -> str:
-		return hashlib.sha256(dumps([self.__class__.__name__])).hexdigest()
+		pass
 
 	def _create(self, set_name: str) -> "_FieldContent":
-		return _SparseLabelContent(self)
+		pass
 
 
 class _SparseLabelContent(_FieldContent):
@@ -1572,19 +1369,10 @@ class _SparseLabelContent(_FieldContent):
 			>>> field_content.read_next(dataset)
 			('Python', 1)
 		"""
-		label = next(dataset).rstrip()
-		if not label:
-			return None, 0
-		return label, 1
+		pass
 
 	def process_before_vocab(self):
-		raw_data_hash = UnorderedSha256()
-		for label in self._original_data:
-			raw_data_hash.update_data(dumps(label))
-		self._data_hash = self._raw_data_hash = raw_data_hash.hexdigest()
-
-		self.field.get_vocab().add_tokens(self._original_data, None)
+		pass
 
 	def get_data(self) -> Any:
-		id_data = self.field.get_vocab().convert_tokens_to_ids(self._original_data)
-		return {"id": id_data, "str": self._original_data}
+		pass

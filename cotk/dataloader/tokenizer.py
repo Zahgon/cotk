@@ -142,4 +142,4 @@ class PretrainedTokenizer(Tokenizer):
 	def get_tokenizer_class(self) -> str:
 		'''Get the class name of pretrained tokenizer.
 		'''
-		return self._tokenizer_class_name
+		pass

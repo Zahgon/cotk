@@ -96,7 +96,7 @@ class LanguageGeneration(LanguageProcessing):
 
 	def get_batch(self, set_name: str, indexes: List[int] #pylint: disable=useless-super-delegation
 			) -> Dict[str, Any]:
-		return super().get_batch(set_name, indexes)
+		pass
 
 
 	GEN_LOG_PROB_KEY_ARGUMENTS = MetricBase.GEN_LOG_PROB_KEY_ARGUMENTS
@@ -113,13 +113,7 @@ class LanguageGeneration(LanguageProcessing):
 		Arguments:
 			{GEN_LOG_PROB_KEY_ARGUMENTS}
 		'''
-		from ..metric import MetricChain, PerplexityMetric
-		metric = MetricChain()
-		metric.add_metric(PerplexityMetric(self, \
-					reference_allvocabs_key='sent_allvocabs', \
-					reference_len_key='sent_length', \
-					gen_log_prob_key=gen_log_prob_key))
-		return metric
+		pass
 
 	GEN_KEY_ARGUMENTS = MetricBase.GEN_KEY_ARGUMENTS
 	SAMPLE_ARGUMENTS_IN_BLEU = MetricBase.SAMPLE_ARGUMENTS_IN_BLEU.\
@@ -149,28 +143,7 @@ class LanguageGeneration(LanguageProcessing):
 			{SEED_ARGUMENTS}
 			{CPU_COUNT_ARGUMENTS}
 		'''
-		from ..metric import MetricChain, LanguageGenerationRecorder, \
-			FwBwBleuCorpusMetric, SelfBleuCorpusMetric, NgramFwBwPerplexityMetric
-		metric = MetricChain()
-		metric.add_metric(SelfBleuCorpusMetric(self, \
-					gen_key=gen_key, \
-					sample=sample_in_bleu, \
-					seed=seed, \
-					cpu_count=cpu_count))
-		metric.add_metric(FwBwBleuCorpusMetric(self, \
-					reference_test_list=self.get_all_batch("test")["sent"], \
-					gen_key=gen_key, \
-					sample=sample_in_bleu, \
-					seed=seed, \
-					cpu_count=cpu_count))
-		metric.add_metric(FwBwBleuCorpusMetric(self, \
-					reference_test_list=self.get_all_batch("test")["sent"], \
-					gen_key=gen_key, \
-					sample=sample_in_ngram_perplexity, \
-					seed=seed, \
-					cpu_count=cpu_count))
-		metric.add_metric(LanguageGenerationRecorder(self, gen_key=gen_key))
-		return metric
+		pass
 
 class MSCOCO(LanguageGeneration):
 	'''Bases: :class:`.dataloader.LanguageGeneration`

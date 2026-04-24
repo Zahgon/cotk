@@ -80,38 +80,7 @@ class _PrecisionRecallMetric(MetricBase):
 					... }
 
 		'''
-		super().forward(data)
-		candidate_allvocabs = data[self.candidate_allvocabs_key]
-		multiple_gen = data[self.multiple_gen_key]
-
-		if not isinstance(candidate_allvocabs, (np.ndarray, list)):
-			raise TypeError("Unknown type for candidate_allvocabs.")
-		if not isinstance(multiple_gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for multiple_gen")
-
-		references = [[self.dataloader.trim_in_ids(cand[1:]) for cand in inst] \
-					  for inst in candidate_allvocabs]
-		gens = [[self.dataloader.trim_in_ids(cand) for cand in inst] \
-					  for inst in multiple_gen]
-
-		if len(references) != len(gens):
-			raise ValueError("Batch num is not matched.")
-
-		for line in gens:
-			if len(line) != self.generated_num_per_context:
-				raise ValueError(\
-					"Number of geneated sentences per context does not equal to\
-					the specified `generated_num_per_context`")
-
-		self._hash_unordered_list(list(chain(*references)))
-		for reference, gen in zip(references, gens):
-			# pylint: disable=no-member
-			matrix = np.zeros((len(reference), len(gen)), dtype=np.float32)
-			for i, single_ref in enumerate(reference):
-				for j, single_gen in enumerate(gen):
-					matrix[i][j] = self._score(single_gen, single_ref)
-			self.prec_list.append(float(np.sum(np.max(matrix, 0))) / len(gen))
-			self.rec_list.append(float(np.sum(np.max(matrix, 1))) / len(reference))
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains
@@ -188,10 +157,7 @@ class BleuPrecisionRecallMetric(_PrecisionRecallMetric):
 
 			* list: processed result.
 		'''
-		output = []
-		for ele in _input:
-			output.append(_target if ele == self.dataloader.unk_id else ele)
-		return output
+		pass
 
 	def _score(self, gen: List[int], reference: List[int]) -> float:
 		'''Return a BLEU score \in [0, 1] to calculate BLEU-ngram precision and recall.
@@ -207,8 +173,7 @@ class BleuPrecisionRecallMetric(_PrecisionRecallMetric):
 			>>> self._score(gen, reference)
 			0.150 # assume self.weights = [0.25,0.25,0.25,0.25]
 		'''
-		gen = self._replace_unk(gen)
-		return sentence_bleu([reference], gen, self.weights, SmoothingFunction().method1)
+		pass
 
 class EmbSimilarityPrecisionRecallMetric(_PrecisionRecallMetric):
 	'''Metric for calculating cosine similarity precision and recall.
@@ -288,23 +253,4 @@ class EmbSimilarityPrecisionRecallMetric(_PrecisionRecallMetric):
 			>>> self._score(gen, reference)
 			0.135 # assume self.mode = 'avg'
 		'''
-		gen_vec = []
-		ref_vec = []
-		for word in self.dataloader.convert_ids_to_tokens(gen):
-			if word in self.word2vec:
-				gen_vec.append(self.word2vec[word])
-		for word in self.dataloader.convert_ids_to_tokens(reference):
-			if word in self.word2vec:
-				ref_vec.append(self.word2vec[word])
-		if not gen_vec or not ref_vec:
-			return 0
-		if self.mode == 'avg':
-			gen_embed = np.average(gen_vec, 0)
-			ref_embed = np.average(ref_vec, 0)
-		else:
-			gen_embed = np.max(gen_vec, 0)
-			ref_embed = np.max(ref_vec, 0)
-		cos = np.sum(gen_embed * ref_embed) / \
-			  np.sqrt(np.sum(gen_embed * gen_embed) * np.sum(ref_embed * ref_embed))
-		norm = (cos + 1) / 2
-		return norm
+		pass

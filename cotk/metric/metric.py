@@ -193,10 +193,7 @@ class MetricBase(LoadClassInterface, metaclass=DocStringInheritor):
 		Arguments:
 			data (dict): A dict contains the data that metrics need.
 		'''
-		if self.closed:
-			raise ValueError("The metric has been closed.")
-		if not isinstance(data, dict):
-			raise TypeError("Data must be a dict.")
+		pass
 
 	def close(self) -> Dict[Any, Any]:
 		'''
@@ -232,9 +229,7 @@ class MetricChain(MetricBase):
 		Arguments:
 			metric (:class:`.metric.MetricBase`): a metric class.
 		'''
-		if not isinstance(metric, MetricBase):
-			raise TypeError("Metric must be a subclass of MetricBase")
-		self.metric_list.append(metric)
+		pass
 
 	def forward(self, data: Dict[Any, Any]):
 		'''Processing a batch of data.
@@ -243,9 +238,7 @@ class MetricChain(MetricBase):
 			data (dict): A dict at least contains keys which all the
 				metric components need.
 		'''
-		super().forward(data)
-		for metric in self.metric_list:
-			metric.forward(data)
+		pass
 
 	def close(self) -> Dict[Any, Any]:
 		r'''Return a dict containing the items which all the metric components return.

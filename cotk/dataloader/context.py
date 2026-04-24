@@ -45,10 +45,7 @@ class Context(metaclass=DocStringInheritor):
 
 	@classmethod
 	def _set_parameters(cls, parameter_dict: Dict[str, Any], weak=False, none_as_ignored=True) -> Dict[str, Any]:
-		old_parameters: Dict[str, Any] = {}
-		for key, value in parameter_dict.items():
-			old_parameters[key] = cls.set(key, value, weak=weak, none_as_ignored=none_as_ignored)
-		return old_parameters
+		pass
 
 	@classmethod
 	def get(cls, key: str, default: Any = None, no_default=False) -> Any:
@@ -89,19 +86,7 @@ class Context(metaclass=DocStringInheritor):
 			{WEAK_ARGS}
 			{NONE_AS_IGNORED_ARGS}
 		'''
-		if key not in cls.context_dict:
-			old = Context.UNDEFINED
-			if value or not none_as_ignored:
-				cls.context_dict[key] = value
-			return old
-
-		old = cls.context_dict[key]
-		if not weak:
-			if value is Context.UNDEFINED:
-				del cls.context_dict[key]
-			elif value is not None or not none_as_ignored:
-				cls.context_dict[key] = value
-		return old
+		pass
 
 	def __enter__(self):
 		'''Enter a context'''

@@ -50,44 +50,10 @@ class DocStringInheritor(type):
 				raise KeyError("No such attr.")
 
 		def replace_for_clsdict(first):
-			def replace(matched):
-				attr_name = matched.group(1)
-				if not first:
-					if "." not in attr_name and not attr_name.startswith("_"):
-						raise ValueError(("%s are not allowed in nested replacement when interpreting docstring of class %s, "
-							"try to use BaseClassName.ATTR or _ATTR instead.") % (attr_name, name))
-				try:
-					return find_attr(attr_name)
-				except ValueError as err:
-					if err.args[0].startswith("No bases"):
-						raise ValueError("Can't find %s when interpreting docstring of class %s, because the class doesn't have a baseclass named %s." \
-							% (attr_name, name, attr_name.split(".")[0]))
-					else:
-						raise
-				except (AttributeError, KeyError):
-					raise ValueError("Can't find %s when interpreting docstring of class %s, please check whether the CONSTANT exists." \
-						% (attr_name, name))
-			return replace
+			pass
 
 		def replace_for(attr, first):
-			def replace(matched):
-				attr_name = matched.group(1)
-				if not first:
-					if "." not in attr_name and not attr_name.startswith("_"):
-						raise ValueError("%s are not allowed in nested replacement when interpreting docstring of class %s, "
-							"try to use BaseClassName.ATTR or _ATTR instead." % (attr_name, name))
-				try:
-					return find_attr(attr_name)
-				except ValueError as err:
-					if err.args[0].startswith("No bases"):
-						raise ValueError("Can't find %s when interpreting docstring of %s.%s, because the class doesn't have a baseclass named %s." \
-							% (attr_name, name, attr, attr_name.split(".")[0]))
-					else:
-						raise
-				except (AttributeError, KeyError):
-					raise ValueError("Can't find %s when interpreting docstring of %s.%s, please check whether the CONSTANT exists." \
-						% (attr_name, name, attr))
-			return replace
+			pass
 
 		# modify class docstring
 		# first, inherit docstring from bases
@@ -216,16 +182,16 @@ def copy_func(target, cls, method_name):
 	assert callable(method)
 	@wraps(method)
 	def new_method(self, *args, **kwargs):
-		return getattr(target(self), method_name)(*args, **kwargs)
+		pass
 	new_method.__doc__ = fix_doc(cls.META_DOC_FOR_ATTRIBUTES[method_name], cls) # type: ignore
 	return new_method
 
 def copy_property(target, cls, old_property_name):
 	def new_property_fget(self):
-		return getattr(target(self), old_property_name)
+		pass
 	def new_property_fset(self, a):
-		setattr(target(self), old_property_name, a)
+		pass
 	def new_property_fdel(self):
-		delattr(target(self), old_property_name)
+		pass
 	doc = fix_doc(cls.META_DOC_FOR_ATTRIBUTES[old_property_name], cls)
 	return property(new_property_fget, new_property_fset, new_property_fdel, doc) #type: ignore

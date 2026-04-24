@@ -166,13 +166,7 @@ class MultiTurnDialog(LanguageProcessing):
 		Returns:
 			A :class:`.metric.MetricChain` object.
 		'''
-		from ..metric import MetricChain, MultiTurnPerplexityMetric
-		metric = MetricChain()
-		metric.add_metric(MultiTurnPerplexityMetric(self, \
-													multi_turn_gen_log_prob_key=multi_turn_gen_log_prob_key, \
-													multi_turn_reference_len_key="sent_length", \
-													multi_turn_reference_allvocabs_key="sent_allvocabs"))
-		return metric
+		pass
 
 	def get_inference_metric(self, multi_turn_gen_key="multi_turn_gen"):
 		'''Get metric for inference.
@@ -190,15 +184,7 @@ class MultiTurnDialog(LanguageProcessing):
 		Returns:
 			A :class:`.metric.MetricChain` object.
 		'''
-		from ..metric import MetricChain, MultiTurnBleuCorpusMetric, MultiTurnDialogRecorder
-		metric = MetricChain()
-		metric.add_metric(MultiTurnBleuCorpusMetric(self, multi_turn_gen_key=multi_turn_gen_key, \
-													multi_turn_reference_allvocabs_key="sent_allvocabs",
-													turn_len_key="turn_length"))
-		metric.add_metric(MultiTurnDialogRecorder(self, multi_turn_gen_key=multi_turn_gen_key, \
-												  multi_turn_reference_allvocabs_key="sent_allvocabs",
-												  turn_len_key="turn_length"))
-		return metric
+		pass
 
 
 # TODO: doc
@@ -345,7 +331,7 @@ class SwitchboardCorpus(MultiTurnDialog):
 				[[2, 6, 5, 10, 3]]]           # one response to 2nd session:  <go> you are fine <eos>
 			}
 		'''
-		return super().get_batch(set_name, indexes)
+		pass
 
 	def get_multi_ref_metric(self, generated_num_per_context=20, word2vec=None, \
 							 multiple_gen_key="multiple_gen_key"):
@@ -364,18 +350,4 @@ class SwitchboardCorpus(MultiTurnDialog):
 		Returns:
 			A :class:`.metric.MetricChain` object.
 		'''
-		from ..metric import MetricChain, BleuPrecisionRecallMetric, EmbSimilarityPrecisionRecallMetric
-		metric = MetricChain()
-		if word2vec is None:
-			glove = Glove("resources://Glove300d")
-			word2vec = glove.load_dict(self.frequent_vocab_list)
-		for ngram in range(1, 5):
-			metric.add_metric(BleuPrecisionRecallMetric(self, ngram, generated_num_per_context, \
-														multiple_gen_key=multiple_gen_key))
-		metric.add_metric(EmbSimilarityPrecisionRecallMetric(self, word2vec, \
-															 'avg', generated_num_per_context,
-															 multiple_gen_key=multiple_gen_key))
-		metric.add_metric(EmbSimilarityPrecisionRecallMetric(self, word2vec, \
-															 'extrema', generated_num_per_context,
-															 multiple_gen_key=multiple_gen_key))
-		return metric
+		pass

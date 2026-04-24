@@ -27,8 +27,7 @@ def _sentence_bleu(ele):
 
 		* int: **sentence-bleu** value.
 	'''
-
-	return sentence_bleu(ele[0], ele[1], weights=ele[2], smoothing_function=SmoothingFunction().method1)
+	pass
 
 class BleuCorpusMetric(MetricBase):
 	'''Metric for calculating BLEU.
@@ -104,68 +103,13 @@ class BleuCorpusMetric(MetricBase):
 					...	    gen_key: [[4,5,3], [6,7,8,3]]
 					... }
 		'''
-		super().forward(data)
-		if self.tokenizer is None:
-			self._direct_forward(data)
-		else:
-			self._re_tokenize_forward(data)
+		pass
 
 	def _direct_forward(self, data: Dict[str, Any]):
-		gen = data[self.gen_key]
-		resp = data[self.reference_allvocabs_key]
-
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen.")
-		if not isinstance(resp, (np.ndarray, list)):
-			raise TypeError("Unknown type for resp")
-
-		if len(resp) != len(gen):
-			raise ValueError("Batch num is not matched.")
-
-		relevant_data = []
-		for gen_sen, resp_sen in zip(gen, resp):
-			hyp = self.dataloader.convert_ids_to_tokens(gen_sen, remove_special=True, trim=True)
-			if self.reference_num == 1:
-				refs = [self.dataloader.convert_ids_to_tokens(resp_sen, remove_special=True, trim=True)]
-			else:
-				if self.reference_num is not None and len(resp_sen) != self.reference_num:
-					raise RuntimeError("Require %d references but get %d" % (self.reference_num, len(resp_sen)))
-				refs = [self.dataloader.convert_ids_to_tokens(resp_single_sen, remove_special=True, trim=True) for resp_single_sen in resp_sen]
-			self.hyps.append(hyp)
-			self.refs.append(refs)
-			relevant_data.append(refs)
-		self._hash_unordered_list(relevant_data)
+		pass
 
 	def _re_tokenize_forward(self, data: Dict[str, Any]):
-		gen = data[self.gen_key]
-		resp = data.get(self.reference_allvocabs_key, None)
-		resp_str = data.get(self.reference_str_key, None)
-
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen.")
-		#fill more typeerror hints
-
-		relevant_data = []
-		for i, gen_sen in enumerate(gen):
-			hyp = self.dataloader.convert_ids_to_sentence(gen_sen, remove_special=True, trim=True)
-			if resp_str:
-				if self.reference_num == 1:
-					refs = [resp_str[i]]
-				else:
-					if self.reference_num is not None and len(resp_str[i]) != self.reference_num:
-						raise RuntimeError("Require %d references but get %d" % (self.reference_num, len(resp_str[i])))
-					refs = resp_str[i]
-			else:
-				if self.reference_num == 1:
-					refs = [self.dataloader.convert_ids_to_sentence(resp[i], remove_special=None, trim=True)]
-				else:
-					if self.reference_num is not None and len(resp[i]) != self.reference_num:
-						raise RuntimeError("Require %d references but get %d" % (self.reference_num, len(resp[i])))
-					refs = [self.dataloader.convert_ids_to_sentence(resp_single_sen, remove_special=True, trim=True) for resp_single_sen in resp[i]]
-			self.hyps.append(hyp)
-			self.refs.append(refs)
-			relevant_data.append(refs)
-		self._hash_unordered_list(relevant_data)
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains
@@ -281,13 +225,7 @@ class SelfBleuCorpusMetric(MetricBase):
 					...	    gen_key: [[4,5,3], [6,7,8,3]]
 					... }
 		'''
-		super().forward(data)
-		gen = data[self.gen_key]
-
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen.")
-
-		self.hyps.extend(gen)
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains
@@ -437,13 +375,7 @@ class FwBwBleuCorpusMetric(MetricBase):
 					...	    gen_key: [[4,5,3], [6,7,8,3]]
 					... }
 		'''
-		gen = data[self.gen_key]
-
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen.")
-
-		for gen_sen in gen:
-			self.hyps.append(list(self.dataloader.trim_in_ids(gen_sen)))
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains
@@ -631,27 +563,7 @@ class MultiTurnBleuCorpusMetric(MetricBase):
 					...	    gen_key: [[[6,7,8,3], [4,5,3]], [[7,3]]]
 					... }
 		'''
-		super().forward(data)
-		reference_allvocabs = data[self.multi_turn_reference_allvocabs_key]
-		length = data[self.turn_len_key]
-		gen = data[self.multi_turn_gen_key]
-
-		if not isinstance(reference_allvocabs, (np.ndarray, list)):
-			raise TypeError("Unknown type for reference_allvocabs.")
-		if not isinstance(length, (np.ndarray, list)):
-			raise TypeError("Unknown type for length")
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen")
-
-		if len(length) != len(reference_allvocabs) or len(length) != len(gen):
-			raise ValueError("Batch num is not matched.")
-
-		for i, turn_length in enumerate(length):
-			gen_session = gen[i]
-			ref_session = reference_allvocabs[i]
-			for j in range(turn_length):
-				self.hyps.append(list(self.dataloader.trim_in_ids(gen_session[j])))
-				self.refs.append([list(self.dataloader.trim_in_ids(ref_session[j])[1:])])
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains

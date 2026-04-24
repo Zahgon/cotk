@@ -132,7 +132,7 @@ class SingleTurnDialog(LanguageProcessing):
 			}'''
 	def get_batch(self, set_name: str, indexes: List[int] #pylint: disable=useless-super-delegation
 			) -> Dict[str, Any]:
-		return super().get_batch(set_name, indexes)
+		pass
 
 	def get_teacher_forcing_metric(self, gen_log_prob_key="gen_log_prob",\
 					   generate_rare_vocab=False) -> "MetricChain":
@@ -148,14 +148,7 @@ class SingleTurnDialog(LanguageProcessing):
 			generate_rare_vocab (bool): Whether ``gen_log_prob`` contains invalid vocab.
 				Refer to :class:`.metric.PerplexityMetric`. Default: ``False``.
 		'''
-		from ..metric import MetricChain, PerplexityMetric
-		metric = MetricChain()
-		metric.add_metric(PerplexityMetric(self,\
-			reference_allvocabs_key="resp_allvocabs",\
-			reference_len_key="resp_length",\
-			gen_log_prob_key=gen_log_prob_key,\
-			generate_rare_vocab=generate_rare_vocab))
-		return metric
+		pass
 
 	def get_inference_metric(self, gen_key="gen") -> "MetricChain":
 		'''Get metrics for inference.
@@ -170,12 +163,7 @@ class SingleTurnDialog(LanguageProcessing):
 				Refer to :class:`.metric.BleuCorpusMetric` or
 				:class:`.metric.SingleTurnDialogRecorder`. Default: ``gen``.
 		'''
-		from ..metric import MetricChain, BleuCorpusMetric, SingleTurnDialogRecorder
-		metric = MetricChain()
-		metric.add_metric(BleuCorpusMetric(self, gen_key=gen_key, \
-			reference_allvocabs_key="resp_allvocabs", reference_str_key="resp_str"))
-		metric.add_metric(SingleTurnDialogRecorder(self, gen_key=gen_key))
-		return metric
+		pass
 
 class OpenSubtitles(SingleTurnDialog):
 	'''Bases: :class:`.dataloader.SingleTurnDialog`

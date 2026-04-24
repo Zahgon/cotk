@@ -78,24 +78,7 @@ class SingleTurnDialogRecorder(MetricBase):
 					...	    gen_key: [[6,7,8], [4,5,3]]
 					... }
 		'''
-		super().forward(data)
-		post_allvocabs = data[self.post_allvocabs_key]
-		resp_allvocabs = data[self.resp_allvocabs_key]
-		gen = data[self.gen_key]
-
-		if not isinstance(post_allvocabs, (np.ndarray, list)):
-			raise TypeError("Unknown type for post_allvocabs.")
-		if not isinstance(resp_allvocabs, (np.ndarray, list)):
-			raise TypeError("Unknown type for resp_allvocabs")
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen")
-
-		if len(post_allvocabs) != len(resp_allvocabs) or len(resp_allvocabs) != len(gen):
-			raise ValueError("Batch num is not matched.")
-		for i, post_sen in enumerate(post_allvocabs):
-			self.post_list.append(self.dataloader.convert_ids_to_sentence(post_sen[1:]))
-			self.resp_list.append(self.dataloader.convert_ids_to_sentence(resp_allvocabs[i][1:]))
-			self.gen_list.append(self.dataloader.convert_ids_to_sentence(gen[i]))
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains
@@ -193,32 +176,7 @@ class MultiTurnDialogRecorder(MetricBase):
 					...	    turn_len_key: [2,1]
 					... }
 		'''
-		super().forward(data)
-		reference_allvocabs = data[self.multi_turn_reference_allvocabs_key]
-		gen = data[self.multi_turn_gen_key]
-		turn_length = data[self.turn_len_key]
-
-		if not isinstance(reference_allvocabs, (np.ndarray, list)):
-			raise TypeError("Unknown type for reference_allvocabs")
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen")
-		if not isinstance(turn_length, (np.ndarray, list)):
-			raise TypeError("Unknown type for turn_length")
-
-		if len(turn_length) != len(reference_allvocabs) or \
-			len(turn_length) != len(gen):
-			raise ValueError("Batch num is not matched.")
-
-		for i, _ in enumerate(reference_allvocabs):
-			self.reference_list.append(self.dataloader.convert_multi_turn_ids_to_tokens( \
-				reference_allvocabs[i], remove_special=True))
-			self.gen_list.append(self.dataloader.convert_multi_turn_ids_to_tokens( \
-				gen[i], remove_special=True))
-			self.reference_list[-1] = [" ".join(toks) for toks in self.reference_list[-1]]
-			self.gen_list[-1] = [" ".join(toks) for toks in self.gen_list[-1]]
-			if len(self.reference_list[-1]) != len(self.gen_list[-1]):
-				raise ValueError("Reference turn num %d != gen turn num %d." % \
-						(len(self.reference_list[-1]), len(self.gen_list[-1])))
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains
@@ -280,14 +238,7 @@ class LanguageGenerationRecorder(MetricBase):
 					...	    gen_key: [[6,7,8,3], [4,5,3]]
 					... }
 		'''
-		super().forward(data)
-		gen = data[self.gen_key]
-
-		if not isinstance(gen, (np.ndarray, list)):
-			raise TypeError("Unknown type for gen")
-
-		for sen in gen:
-			self.gen_list.append(self.dataloader.convert_ids_to_sentence(sen))
+		pass
 
 	def close(self) -> Dict[str, Any]:
 		'''Return a dict which contains
